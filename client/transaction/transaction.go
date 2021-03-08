@@ -30,6 +30,8 @@ type TransactionClient interface {
 	UnfreezeToken(symbol string, amount int64, sync bool, options ...Option) (*UnfreezeTokenResult, error)
 	IssueToken(name, symbol string, supply int64, sync bool, mintable bool, options ...Option) (*IssueTokenResult, error)
 	SendToken(transfers []msg.Transfer, sync bool, options ...Option) (*SendTokenResult, error)
+	SignTokenTransfer(transfers []msg.Transfer, sync bool, options ...Option) (rawtx []byte, err error)
+	BroadcastSignedMsg(rawBz []byte, sync bool, options ...Option) (*tx.TxCommitResult, error)
 	MintToken(symbol string, amount int64, sync bool, options ...Option) (*MintTokenResult, error)
 	TransferTokenOwnership(symbol string, newOwner types.AccAddress, sync bool, options ...Option) (*TransferTokenOwnershipResult, error)
 	TimeLock(description string, amount types.Coins, lockTime int64, sync bool, options ...Option) (*TimeLockResult, error)
@@ -111,6 +113,23 @@ func (c *client) broadcastMsg(m msg.Msg, sync bool, options ...Option) (*tx.TxCo
 	if err != nil {
 		return nil, err
 	}
+	// Hex encoded signed transaction, ready to be posted to BncChain API
+	hexTx := []byte(hex.EncodeToString(rawBz))
+	param := map[string]string{}
+	if sync {
+		param["sync"] = "true"
+	}
+	commits, err := c.basicClient.PostTx(hexTx, param)
+	if err != nil {
+		return nil, err
+	}
+	if len(commits) < 1 {
+		return nil, fmt.Errorf("Len of tx Commit result is less than 1 ")
+	}
+	return &commits[0], nil
+}
+
+func (c *client) BroadcastSignedMsg(rawBz []byte, sync bool, options ...Option) (*tx.TxCommitResult, error) {
 	// Hex encoded signed transaction, ready to be posted to BncChain API
 	hexTx := []byte(hex.EncodeToString(rawBz))
 	param := map[string]string{}

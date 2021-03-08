@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.7
+* Split build and sign xfer message from broadcast
+
 ## 1.2.6
 CHAIN UPGRADE
 * [\#144](https://github.com/binance-chain/go-sdk/pull/144) [RPC] [API] Support for the transfer of token ownership, and change the minimum token symbol length
